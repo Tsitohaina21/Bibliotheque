@@ -245,9 +245,18 @@
                           th:text="${adherent.statut}"></span>
                   </td>
                   <td>
-                    <button th:if="${adherent.statut.name() == 'actif'}" class="btn btn-danger btn-sm">Bloquer</button>
-                    <button th:if="${adherent.statut.name() == 'bloque'}" class="btn btn-success btn-sm">Débloquer</button>
+                    <form th:action="@{/admin/adherents/modifier-statut}" method="post" th:if="${adherent.statut.name() == 'actif'}" style="display:inline;">
+                      <input type="hidden" name="adherentId" th:value="${adherent.id}" />
+                      <input type="hidden" name="statut" value="bloque" />
+                      <button type="submit" class="btn btn-danger btn-sm">Bloquer</button>
+                    </form>
+                    <form th:action="@{/admin/adherents/modifier-statut}" method="post" th:if="${adherent.statut.name() == 'bloque'}" style="display:inline;">
+                      <input type="hidden" name="adherentId" th:value="${adherent.id}" />
+                      <input type="hidden" name="statut" value="actif" />
+                      <button type="submit" class="btn btn-success btn-sm">Débloquer</button>
+                    </form>
                   </td>
+
                 </tr>
                 <tr th:if="${adherents == null || adherents.isEmpty()}">
                   <td colspan="5" class="text-center text-muted">Aucun adhérent enregistré</td>

@@ -1,5 +1,6 @@
 package com.example.bibliotheque.controller;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,9 +9,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.example.bibliotheque.model.Adherent;
 import com.example.bibliotheque.model.Admin;
 import com.example.bibliotheque.model.DemandeEmprunt;
+import com.example.bibliotheque.repository.AdherentRepository;
 import com.example.bibliotheque.service.AdherentService;
 import com.example.bibliotheque.service.AdminService;
 import com.example.bibliotheque.service.DemandeEmpruntService;
@@ -100,4 +104,29 @@ public class BibliController {
         return "redirect:/";
     }
     
+    @Autowired 
+    private AdherentRepository adherentRepository;
+    @PostMapping("/admin/adherents/modifier-statut")
+    public String modifierStatutAdherent(@RequestParam("adherentId") Integer adherentId,
+                                     @RequestParam("statut") String statut,
+                                     RedirectAttributes redirectAttributes) {
+    try {
+        Adherent adherent = adherentRepository.findById(adherentId).orElseThrow();
+        adherent.setStatut(Adherent.Statut.valueOf(statut));
+
+        if (adherent.getStatut() == Adherent.Statut.actif) {
+            adherent.setDateDeblocage(null);
+        } else {
+            adherent.setDateDeblocage(LocalDate.now().plusDays(10));
+        }
+
+        adherentRepository.save(adherent);
+        redirectAttributes.addFlashAttribute("success", "Statut mis à jour avec succès.");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("error", "Erreur lors de la mise à jour.");
+    }
+
+    return "redirect:/admin/dashboard";
+}
+
 }
