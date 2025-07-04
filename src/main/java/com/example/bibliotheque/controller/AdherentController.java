@@ -3,6 +3,7 @@ package com.example.bibliotheque.controller;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,9 @@ import lombok.RequiredArgsConstructor;
 public class AdherentController {
 
     private final AdherentService service;
+    private final LivreService livreService;
+    private final DemandeEmpruntService demandeService;
+    private final EmpruntService empruntService;
 
     @GetMapping("/login-adherent")
     public String showLogin() {
@@ -75,17 +79,12 @@ public class AdherentController {
         session.invalidate();
         return "redirect:/";
     }
-    
-    private final LivreService livreService;
 
     @GetMapping("/catalogue")
     public String afficherLivres(Model model) {
         model.addAttribute("livres", livreService.getAllLivres());
         return "adherent/catalogue";
     }
-
-    //demande et emprunt
-    private final DemandeEmpruntService demandeService;
 
     @PostMapping("/demande-action")
     public String creerDemande(@RequestParam Integer livreId,
@@ -98,7 +97,6 @@ public class AdherentController {
             return "redirect:/login-adherent";
         }
 
-        //Vérification du blocage
         if (adherent.getDateDeblocage() != null && adherent.getDateDeblocage().isAfter(LocalDate.now())) {
             redirectAttributes.addAttribute("error", "Vous êtes bloqué jusqu'au " + adherent.getDateDeblocage() + ". Vous ne pouvez pas faire de demande.");
             return "redirect:/catalogue";
@@ -117,7 +115,6 @@ public class AdherentController {
         return "redirect:/catalogue";
     }
 
-
     @GetMapping("/mes-demandes")
     public String mesDemandes(HttpSession session, Model model) {
         Adherent adherent = (Adherent) session.getAttribute("adherent");
@@ -130,15 +127,22 @@ public class AdherentController {
         return "adherent/mes-demandes";
     }
 
-    private final EmpruntService empruntService;
- 
+    // Méthode modifiée pour accepter une date de retour personnalisée
     @PostMapping("/adherent/rendre-livre/{id}")
-    public String rendreLivre(@PathVariable Integer id, HttpSession session) {
+    public String rendreLivre(@PathVariable Integer id, 
+                            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate dateRetour,
+                            HttpSession session,
+                            RedirectAttributes redirectAttributes) {
         Adherent adherent = (Adherent) session.getAttribute("adherent");
         if (adherent == null) return "redirect:/login-adherent";
 
-        empruntService.rendreLivre(id, adherent);
+        try {
+            empruntService.rendreLivre(id, adherent, dateRetour);
+            redirectAttributes.addFlashAttribute("success", "Livre rendu avec succès.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
         return "redirect:/dashboard-adherent";
     }
-
 }

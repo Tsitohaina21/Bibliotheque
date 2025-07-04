@@ -22,7 +22,8 @@ public class EmpruntService {
         return empruntRepository.findByAdherent_IdAndRenduFalse(adherent.getId());
     }
 
-    public void rendreLivre(Integer empruntId, Adherent adherent) {
+    // Méthode modifiée pour accepter une date de retour personnalisée
+    public void rendreLivre(Integer empruntId, Adherent adherent, LocalDate dateRetour) {
         Emprunt emprunt = empruntRepository.findById(empruntId)
                 .orElseThrow(() -> new RuntimeException("Emprunt introuvable"));
 
@@ -30,15 +31,26 @@ public class EmpruntService {
             throw new RuntimeException("Cet emprunt ne vous appartient pas.");
         }
 
-        emprunt.setRendu(true);
-        emprunt.setDateRetourEffective(LocalDate.now());
+        // Validation de la date de retour
+        if (dateRetour.isBefore(emprunt.getDateEmprunt())) {
+            throw new RuntimeException("La date de retour ne peut pas être antérieure à la date d'emprunt.");
+        }
 
-        if (emprunt.getDateRetourPrevue().isBefore(LocalDate.now())) {
+        emprunt.setRendu(true);
+        emprunt.setDateRetourEffective(dateRetour);
+
+        // Vérification du retard basée sur la date de retour effective saisie
+        if (dateRetour.isAfter(emprunt.getDateRetourPrevue())) {
             adherent.setStatut(Adherent.Statut.bloque);
             adherent.setDateDeblocage(LocalDate.now().plusDays(10));
             adherentRepository.save(adherent);
         }
 
         empruntRepository.save(emprunt);
+    }
+
+    // Méthode de compatibilité qui utilise la date actuelle
+    public void rendreLivre(Integer empruntId, Adherent adherent) {
+        rendreLivre(empruntId, adherent, LocalDate.now());
     }
 }

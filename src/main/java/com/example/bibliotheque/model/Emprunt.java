@@ -2,6 +2,7 @@ package com.example.bibliotheque.model;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,7 +37,9 @@ public class Emprunt {
 
     private LocalDate dateRetourPrevue;
 
+    @Column(name = "date_retour_effective")
     private LocalDate dateRetourEffective;
+
 
     @Builder.Default
     private Boolean prolonge = false;
