@@ -26,3 +26,14 @@ INSERT INTO livre (titre, auteur, editeur, annee_parution, isbn, statut, restric
 ("Le Journal d'Anne Frank", 'Anne Frank', 'Contact Publishing', 1947, '9780553296983', 'disponible', 12, 3),
 ('Les Misérables', 'Victor Hugo', 'A. Lacroix, Verboeckhoven & Cie.', 1862, '9780451419439', 'disponible', 0, 6),
 ('La Peste', 'Albert Camus', 'Gallimard', 1947, '9782070360420', 'reserve', 16, 3);
+
+INSERT INTO type_abonnement (nom, prix, duree_jours, limite_emprunt) VALUES
+('basique', 0, 30, 2),
+('standard', 10000, 90, 5),
+('premium', 25000, 365, 10);
+
+INSERT INTO jour_ferie (date_ferie, description) VALUES 
+('2025-01-01', 'Nouvel an'),
+('2025-03-29', 'Commémoration 1947'),
+('2025-05-01', 'Fête du travail'),
+('2025-06-26', 'Indépendance de Madagascar');

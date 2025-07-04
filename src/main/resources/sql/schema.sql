@@ -96,3 +96,20 @@ CREATE TABLE demande_emprunt (
     FOREIGN KEY (id_adherent) REFERENCES adherent(id),
     FOREIGN KEY (id_livre) REFERENCES livre(id)
 );
+
+CREATE TABLE type_abonnement (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom ENUM('basique', 'standard', 'premium') UNIQUE NOT NULL,
+    prix DECIMAL(10,2) NOT NULL,
+    duree_jours INT NOT NULL,
+    limite_emprunt INT NOT NULL
+);
+ALTER TABLE adherent
+ADD id_type_abonnement INT,
+ADD FOREIGN KEY (id_type_abonnement) REFERENCES type_abonnement(id);
+
+CREATE TABLE jour_ferie (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date_ferie DATE UNIQUE NOT NULL,
+    description VARCHAR(255)
+);

@@ -9,6 +9,7 @@ import com.example.bibliotheque.model.Adherent;
 import com.example.bibliotheque.model.Emprunt;
 import com.example.bibliotheque.repository.AdherentRepository;
 import com.example.bibliotheque.repository.EmpruntRepository;
+import com.example.bibliotheque.repository.JourFerieRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,12 +19,31 @@ public class EmpruntService {
     private final EmpruntRepository empruntRepository;
     private final AdherentRepository adherentRepository;
 
+    private final JourFerieRepository jourFerieRepository;
+
     public List<Emprunt> getEmpruntsEnCours(Adherent adherent) {
         return empruntRepository.findByAdherent_IdAndRenduFalse(adherent.getId());
     }
 
     // Méthode modifiée pour accepter une date de retour personnalisée
+    public void validerNouvelEmprunt(Adherent adherent, Emprunt emprunt) {
+        LocalDate today = LocalDate.now();
+
+        if (jourFerieRepository.existsByDateFerie(today)) {
+            throw new RuntimeException("Impossible d'emprunter un livre pendant un jour férié.");
+        }
+        emprunt.setDateEmprunt(today);
+        emprunt.setDateRetourPrevue(today.plusDays(15));
+        emprunt.setRendu(false);
+
+        empruntRepository.save(emprunt);
+    }
+
     public void rendreLivre(Integer empruntId, Adherent adherent, LocalDate dateRetour) {
+        if (jourFerieRepository.existsByDateFerie(dateRetour)) {
+            throw new RuntimeException("Impossible de rendre un livre pendant un jour férié.");
+        }
+
         Emprunt emprunt = empruntRepository.findById(empruntId)
                 .orElseThrow(() -> new RuntimeException("Emprunt introuvable"));
 
@@ -31,15 +51,13 @@ public class EmpruntService {
             throw new RuntimeException("Cet emprunt ne vous appartient pas.");
         }
 
-        // Validation de la date de retour
         if (dateRetour.isBefore(emprunt.getDateEmprunt())) {
-            throw new RuntimeException("La date de retour ne peut pas être antérieure à la date d'emprunt.");
+            throw new RuntimeException("Date de retour invalide.");
         }
 
-        emprunt.setRendu(true);
         emprunt.setDateRetourEffective(dateRetour);
+        emprunt.setRendu(true);
 
-        // Vérification du retard basée sur la date de retour effective saisie
         if (dateRetour.isAfter(emprunt.getDateRetourPrevue())) {
             adherent.setStatut(Adherent.Statut.bloque);
             adherent.setDateDeblocage(LocalDate.now().plusDays(10));
@@ -53,4 +71,6 @@ public class EmpruntService {
     public void rendreLivre(Integer empruntId, Adherent adherent) {
         rendreLivre(empruntId, adherent, LocalDate.now());
     }
+
+
 }

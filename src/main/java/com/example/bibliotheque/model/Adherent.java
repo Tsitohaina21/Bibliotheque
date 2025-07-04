@@ -51,8 +51,6 @@ public class Adherent {
 
     public boolean estBloque() {
         return dateDeblocage != null && dateDeblocage.isAfter(LocalDate.now());
-    }
-
-
-    
+    }   
+     
 }
