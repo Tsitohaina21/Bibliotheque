@@ -145,4 +145,19 @@ public class AdherentController {
 
         return "redirect:/dashboard-adherent";
     }
+
+
+    @PostMapping("/adherent/prolonger-emprunt/{idEmprunt}")
+    public String prolongerEmprunt(@PathVariable Integer idEmprunt,
+                                @RequestParam("nouvelleDateRetour") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate nouvelleDateRetour,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            empruntService.prolongerDateRetour(idEmprunt, nouvelleDateRetour);
+            redirectAttributes.addFlashAttribute("success", "Prolongation enregistrée avec succès.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la prolongation : " + e.getMessage());
+        }
+        return "redirect:/dashboard-adherent"; // adapte à ta route
+    }
+
 }

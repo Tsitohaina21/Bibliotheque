@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.bibliotheque.model.Adherent;
 import com.example.bibliotheque.model.Emprunt;
+import com.example.bibliotheque.model.Livre;
 import com.example.bibliotheque.repository.AdherentRepository;
 import com.example.bibliotheque.repository.EmpruntRepository;
 import com.example.bibliotheque.repository.JourFerieRepository;
+import com.example.bibliotheque.repository.LivreRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class EmpruntService {
     private final EmpruntRepository empruntRepository;
     private final AdherentRepository adherentRepository;
+    private final LivreRepository livreRepository;
 
     private final JourFerieRepository jourFerieRepository;
 
@@ -64,6 +67,11 @@ public class EmpruntService {
             adherentRepository.save(adherent);
         }
 
+        Livre livre = emprunt.getLivre();
+        livre.setNbExemplaires(livre.getNbExemplaires() + 1);
+        livre.setStatut(Livre.Statut.DISPONIBLE); // facultatif si tu veux changer automatiquement
+        livreRepository.save(livre);
+        
         empruntRepository.save(emprunt);
     }
 
@@ -72,5 +80,17 @@ public class EmpruntService {
         rendreLivre(empruntId, adherent, LocalDate.now());
     }
 
+    public void prolongerDateRetour(Integer idEmprunt, LocalDate nouvelleDateRetour) {
+        Emprunt emprunt = empruntRepository.findById(idEmprunt)
+            .orElseThrow(() -> new RuntimeException("Emprunt non trouvé"));
+
+        if (nouvelleDateRetour.isAfter(emprunt.getDateRetourPrevue())) {
+            emprunt.setDateRetourPrevue(nouvelleDateRetour);
+            emprunt.setProlonge(true);  // on marque l'emprunt comme prolongé
+            empruntRepository.save(emprunt);
+        } else {
+            throw new RuntimeException("La nouvelle date doit être après la date actuelle de retour prévue.");
+        }
+    }
 
 }

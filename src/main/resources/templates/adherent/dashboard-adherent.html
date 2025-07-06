@@ -123,15 +123,19 @@
                     <button type="button" 
                             class="btn btn-sm btn-outline-success" 
                             data-bs-toggle="modal" 
-                            th:data-bs-target="'#rendreModal' + ${emprunt.id}"
-                            th:data-emprunt-id="${emprunt.id}"
-                            th:data-livre-titre="${emprunt.livre.titre}"
-                            th:data-date-emprunt="${emprunt.dateEmprunt}"
-                            th:data-date-prevue="${emprunt.dateRetourPrevue}">
+                            th:data-bs-target="'#rendreModal' + ${emprunt.id}">
                       Rendre
+                    </button>
+
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary ms-2" 
+                            data-bs-toggle="modal" 
+                            th:data-bs-target="'#prolongerModal' + ${emprunt.id}">
+                      Prolonger
                     </button>
                   </td>
                 </tr>
+                
                 <tr th:if="${emprunts == null or #lists.isEmpty(emprunts)}">
                   <td colspan="4" class="text-center text-muted">Aucun emprunt en cours</td>
                 </tr>
@@ -167,6 +171,59 @@
             <a href="/mes-demandes" class="btn btn-outline-secondary">Voir mon historique</a>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+    <div th:each="emprunt : ${emprunts}" 
+      th:id="'prolongerModal' + ${emprunt.id}" 
+      class="modal fade" 
+      tabindex="-1" 
+      aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-clock-history me-2"></i>
+            Prolonger l'emprunt
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form th:action="@{'/adherent/prolonger-emprunt/' + ${emprunt.id}}" method="post">
+          <div class="modal-body">
+            <p>
+              Livre : <strong th:text="${emprunt.livre.titre}"></strong>
+            </p>
+            <p>
+              Date retour prévue actuelle : 
+              <strong th:text="${#temporals.format(emprunt.dateRetourPrevue, 'dd/MM/yyyy')}"></strong>
+            </p>
+
+            <div class="mb-3">
+              <label for="nouvelleDateRetour" class="form-label fw-bold">
+                Nouvelle date de retour prévue <span class="text-danger">*</span>
+              </label>
+              <input type="date" 
+                    class="form-control" 
+                    name="nouvelleDateRetour" 
+                    th:id="'nouvelleDateRetour' + ${emprunt.id}"
+                    th:min="${emprunt.dateRetourPrevue.plusDays(1)}"
+                    required>
+              <div class="form-text">
+                La nouvelle date doit être strictement après la date actuelle de retour prévue.
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-lg me-1"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Confirmer la prolongation
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
