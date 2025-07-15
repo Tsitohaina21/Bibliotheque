@@ -111,11 +111,13 @@
                                     <form th:action="@{/demande-action}" method="post" style="display: inline;">
                                         <input type="hidden" name="livreId" th:value="${livre.id}">
                                         <input type="hidden" name="typeAction" value="EMPRUNT">
-                                        <button type="submit" class="btn btn-primary btn-sm" 
+                                        <input type="date" name="dateEmprunt" class="form-control form-control-sm my-1" required>
+                                        <button type="submit" class="btn btn-primary btn-sm"
                                                 onclick="return confirm('Êtes-vous sûr de vouloir faire une demande d\'emprunt pour ce livre ?')">
                                             <i class="bi bi-book"></i> Emprunter
                                         </button>
                                     </form>
+
                                     <form th:action="@{/demande-action}" method="post" style="display: inline;">
                                         <input type="hidden" name="livreId" th:value="${livre.id}">
                                         <input type="hidden" name="typeAction" value="RESERVATION">

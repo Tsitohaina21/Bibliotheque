@@ -89,9 +89,10 @@ public class AdherentController {
     @PostMapping("/demande-action")
     public String creerDemande(@RequestParam Integer livreId,
                             @RequestParam String typeAction,
+                            @RequestParam(required = false)
+                            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate dateEmprunt,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
-
         Adherent adherent = (Adherent) session.getAttribute("adherent");
         if (adherent == null) {
             return "redirect:/login-adherent";
@@ -105,8 +106,7 @@ public class AdherentController {
         try {
             Livre livre = livreService.getLivreById(livreId);
             DemandeEmprunt.TypeAction action = DemandeEmprunt.TypeAction.valueOf(typeAction);
-
-            demandeService.creerDemande(adherent, livre, action);
+            demandeService.creerDemande(adherent, livre, action, dateEmprunt); // 👉 nouvelle méthode
             redirectAttributes.addAttribute("success", "Votre demande a été envoyée avec succès.");
         } catch (Exception e) {
             redirectAttributes.addAttribute("error", e.getMessage());
@@ -114,6 +114,7 @@ public class AdherentController {
 
         return "redirect:/catalogue";
     }
+
 
     @GetMapping("/mes-demandes")
     public String mesDemandes(HttpSession session, Model model) {
@@ -157,7 +158,7 @@ public class AdherentController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erreur lors de la prolongation : " + e.getMessage());
         }
-        return "redirect:/dashboard-adherent"; // adapte à ta route
+        return "redirect:/dashboard-adherent";
     }
 
 }

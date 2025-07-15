@@ -23,33 +23,38 @@ public class DemandeEmpruntService {
     private final EmpruntRepository empruntRepository;
     private final LivreRepository livreRepository;
 
-    public void creerDemande(Adherent adherent, Livre livre, DemandeEmprunt.TypeAction typeAction) {
+    public void creerDemande(Adherent adherent, Livre livre, DemandeEmprunt.TypeAction typeAction, LocalDate dateEmprunt) {
 
-        if (adherent.getDateDeblocage() != null && adherent.getDateDeblocage().isAfter(LocalDate.now())) {
-            throw new RuntimeException("Vous êtes bloqué jusqu'au " + adherent.getDateDeblocage() + ". Vous ne pouvez pas emprunter de livre.");
-        }
-
-        int age = LocalDate.now().getYear() - adherent.getDateNaissance().getYear();
-        if (livre.getRestrictionAge() > age) {
-            throw new RuntimeException("Ce livre est réservé aux personnes de " + livre.getRestrictionAge() + " ans ou plus. Vous avez " + age + " ans");
-        }
-
-        DemandeEmprunt demandeExistante = repository.findByAdherentIdAndLivreIdAndStatut(
-            adherent.getId(), livre.getId(), DemandeEmprunt.StatutDemande.EN_ATTENTE);
-
-        if (demandeExistante != null) {
-            throw new RuntimeException("Une demande est déjà en cours pour ce livre");
-        }
-
-        DemandeEmprunt demande = DemandeEmprunt.builder()
-            .adherent(adherent)
-            .livre(livre)
-            .typeAction(typeAction)
-            .dateDemande(LocalDate.now())
-            .build();
-
-        repository.save(demande);
+    if (adherent.getDateDeblocage() != null && adherent.getDateDeblocage().isAfter(LocalDate.now())) {
+        throw new RuntimeException("Vous êtes bloqué jusqu'au " + adherent.getDateDeblocage() + ". Vous ne pouvez pas emprunter de livre.");
     }
+
+    int age = LocalDate.now().getYear() - adherent.getDateNaissance().getYear();
+    if (livre.getRestrictionAge() > age) {
+        throw new RuntimeException("Ce livre est réservé aux personnes de " + livre.getRestrictionAge() + " ans ou plus. Vous avez " + age + " ans");
+    }
+
+    DemandeEmprunt demandeExistante = repository.findByAdherentIdAndLivreIdAndStatut(
+        adherent.getId(), livre.getId(), DemandeEmprunt.StatutDemande.EN_ATTENTE);
+
+    if (demandeExistante != null) {
+        throw new RuntimeException("Une demande est déjà en cours pour ce livre");
+    }
+
+    if (dateEmprunt == null || dateEmprunt.isBefore(LocalDate.now())) {
+        throw new RuntimeException("Veuillez choisir une date d'emprunt valide.");
+    }
+
+    DemandeEmprunt demande = DemandeEmprunt.builder()
+        .adherent(adherent)
+        .livre(livre)
+        .typeAction(typeAction)
+        .dateDemande(dateEmprunt) // 👉 on utilise la date fournie
+        .build();
+
+    repository.save(demande);
+}
+
 
     public List<DemandeEmprunt> getDemandesEnAttente() {
         return repository.findByStatut(DemandeEmprunt.StatutDemande.EN_ATTENTE);
@@ -87,19 +92,20 @@ public class DemandeEmpruntService {
 
         // Créer l’emprunt si c'est un emprunt accepté
         if (nouveauStatut == DemandeEmprunt.StatutDemande.ACCEPTEE &&
-            demande.getTypeAction() == DemandeEmprunt.TypeAction.EMPRUNT) {
+        demande.getTypeAction() == DemandeEmprunt.TypeAction.EMPRUNT) {
 
-            Emprunt emprunt = Emprunt.builder()
-                .adherent(demande.getAdherent())
-                .livre(demande.getLivre())
-                .dateEmprunt(LocalDate.now())
-                .dateRetourPrevue(LocalDate.now().plusDays(7))
-                .prolonge(false)
-                .rendu(false)
-                .build();
+        Emprunt emprunt = Emprunt.builder()
+            .adherent(demande.getAdherent())
+            .livre(demande.getLivre())
+            .dateEmprunt(demande.getDateDemande()) // ✅ utiliser la date de la demande
+            .dateRetourPrevue(demande.getDateDemande().plusDays(7))
+            .prolonge(false)
+            .rendu(false)
+            .build();
 
-            empruntRepository.save(emprunt);
-        }
+        empruntRepository.save(emprunt);
+    }
+
 
         demande.setStatut(nouveauStatut);
         demande.setDateTraitement(LocalDate.now());
